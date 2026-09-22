@@ -1,0 +1,35 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:8000"
+            - "http://127.0.0.1:8000"
+            - "http://localhost:*"
+          allowed_headers:
+            - "*"
+exporters:
+  debug:
+    verbosity: detailed
+  otlp/tempo:
+    endpoint: "tempo-erp:4317"
+    tls:
+      insecure: true
+  otlphttp/loki:
+    endpoint: "loki-erp:3100/otlp"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug,otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug,otlphttp/loki]

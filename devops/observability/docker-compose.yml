@@ -1,0 +1,51 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector-erp
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - observability-network
+  loki:
+    image: grafana/loki:latest
+    container_name: loki-erp
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    networks:
+      - observability-network
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo-erp
+    restart: unless-stopped
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"
+      - "4317"
+    networks:
+      - observability-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-erp
+    restart: unless-stopped
+    ports:
+      - "4000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - observability-network
+    depends_on:
+      - tempo
+
+networks:
+  observability-network:
+    driver: bridge
